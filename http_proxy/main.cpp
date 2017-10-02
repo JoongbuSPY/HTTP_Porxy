@@ -9,8 +9,8 @@
 
 using namespace std;
 
-int InBound = 0, OutBound = 0;
-string InBound_Data, InBound_Change_Data, OutBound_Data, OutBound_Change_Data;
+int InBound = 0, OutBound = 0,c;
+string InBound_Data[10], InBound_Change_Data[10], OutBound_Data[10], OutBound_Change_Data[10];
 
 void check_argc(int argc)
 {
@@ -157,46 +157,62 @@ void httpproxy_th2(SOCKET Client, SOCKET Web)//httpproxy_th2
 {
 	char buf[65535];//À¥¿¡¼­ ¿À´Â ÀÀ´ä.
 	char *web_buf;
-	int recvlen;
-	while ((recvlen = recv(Web, buf, 65535, 0)) > 0)//Å¸ÀÓ¾Æ¿ô °É±â
+	int recv_len;
+	bool ch = false;
+	while ((recv_len = recv(Web, buf, 65535, 0)) > 0)//Å¸ÀÓ¾Æ¿ô °É±â
 	{
-		if (recvlen == SOCKET_ERROR)
+		if (recv_len == SOCKET_ERROR)
 		{
 			cout << "th2 recv ÇÔ¼ö ½ÇÆÐ" << endl;
 			continue;
 		}
-		web_buf = (char *)malloc(sizeof(char)*recvlen); //recv ¹ÞÀº ¹ÙÀÌÆ® ¸¸Å­ ÀúÀå
+		web_buf = (char *)malloc(sizeof(char)*recv_len); //recv ¹ÞÀº ¹ÙÀÌÆ® ¸¸Å­ ÀúÀå
 
-		memcpy(web_buf, buf, recvlen);
-		std::string InBound_String(web_buf);
-
+		memcpy(web_buf, buf, recv_len);
+		
 		//inbound-> ¼³Á¤ Å¬¶óÀÌ¾ðÆ®ÀÇ ¿äÃ»¿¡ ÀÀ´ä¹ÞÀº µ¥ÀÌÅÍ°¡ Å¬¶óÀÌ¾ðÆ®·Î º¸³»ÁÖ´Â ÆÐÅ¶.
 
 		if (InBound == 1)
 		{
-			if (InBound_String.find(InBound_Data) != string::npos)
+			std::string InBound_String(web_buf);
+
+			for (int i = 0; i < c; i++)
 			{
-				while (InBound_String.find(InBound_Data) != string::npos)
+				if (InBound_String.find(InBound_Data[i]) != string::npos)
 				{
-					InBound_String.replace(InBound_String.find(InBound_Data), InBound_Data.length(), InBound_Change_Data);
-					cout << "Inbound Data Change Sucess!" << endl;
+					ch = true;
+					while (InBound_String.find(InBound_Data[i]) != string::npos)
+					{
+						InBound_String.replace(InBound_String.find(InBound_Data[i]), InBound_Data[i].length(), InBound_Change_Data[i]);
+						cout << "Inbound Data Change Sucess!" << endl;
+					}
 				}
-				
 			}
+		
+			if (ch)
+			{
+				char *In_Data = strdup(InBound_String.c_str());
+
+				//cout << web_buf << endl;
+				if (send(Client, In_Data, recv_len, 0) == SOCKET_ERROR)
+				{
+					cout << "th2 send ÇÔ¼ö ½ÇÆÐ" << endl;
+					continue;
+				}
+			}
+
+			
+			//free(In_Data);
 		}
 		//cout << Inbound_String << endl;
-		char *In_Data = strdup(InBound_String.c_str());
-
-		//cout << web_buf << endl;
-		if (send(Client, In_Data, recvlen, 0) == SOCKET_ERROR)
+		
+		if (send(Client, web_buf, recv_len, 0) == SOCKET_ERROR)
 		{
 			cout << "th2 send ÇÔ¼ö ½ÇÆÐ" << endl;
 			continue;
 		}
-
-		free(In_Data);
-		free(web_buf);
-
+		
+		//free(web_buf);
 	}
 }
 
@@ -206,6 +222,7 @@ void Client_th1(sockaddr_in Server_Addr, SOCKET Client)//Å¬¶óÀÌ¾ðÆ®ÀÇ ¿äÃ»À» ¹Þ´
 
 	char buf[65535];
 	char *recv_buf;
+	bool ch=false;
 
 	string host_Addr, Domain_Addr;
 	SOCKET Web_Socket;
@@ -224,6 +241,30 @@ void Client_th1(sockaddr_in Server_Addr, SOCKET Client)//Å¬¶óÀÌ¾ðÆ®ÀÇ ¿äÃ»À» ¹Þ´
 		recv_buf = (char *)malloc(sizeof(char)*recv_len);
 
 		memcpy(recv_buf, buf, recv_len);
+
+		if (OutBound == 1)
+		{
+			std::string OutBound_String(recv_buf);
+
+			for (int i = 0; i < c; i++)
+			{
+				if (OutBound_String.find(OutBound_Data[i]) != string::npos)
+				{
+					ch = true;
+					while (OutBound_String.find(OutBound_Data[i]) != string::npos)
+					{
+						OutBound_String.replace(OutBound_String.find(OutBound_Data[i]), OutBound_Data[i].length(), OutBound_Change_Data[i]);
+						cout << "OutBound Data Change Sucess!" << endl;
+					}
+				}
+			}
+
+			if (ch)
+			{
+				char *Out_Data = strdup(OutBound_String.c_str());
+				memcpy(recv_buf, Out_Data, OutBound_String.length());
+			}
+		}
 
 		host_Addr = getAddr(recv_buf);
 
@@ -244,6 +285,7 @@ void Client_th1(sockaddr_in Server_Addr, SOCKET Client)//Å¬¶óÀÌ¾ðÆ®ÀÇ ¿äÃ»À» ¹Þ´
 			}
 			cout << "Site IP Addr: " << Domain_Addr << endl;
 		}
+
 		Web_Addr = init_Addr(Domain_Addr, http_port);
 
 		if ((Web_Socket = socket(PF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET)
@@ -266,7 +308,6 @@ void Client_th1(sockaddr_in Server_Addr, SOCKET Client)//Å¬¶óÀÌ¾ðÆ®ÀÇ ¿äÃ»À» ¹Þ´
 
 			//Å¬¶óÀÌ¾ðÆ®°¡(ºê¶ó¿ìÀú°¡ ¿äÃ»ÇÏ´Â ³»¿ë)
 
-			cout << recv_buf << endl;
 			if (send(Web_Socket, recv_buf, recv_len, 0) == SOCKET_ERROR)
 			{
 				printf("send to webserver failed.");
@@ -293,7 +334,7 @@ int main(int argc, char *argv[])
 	
 	string Server_IP = argv[1];
 	int Server_Port = atoi(argv[2]);	//ÇÁ·Ï½Ã ¼­¹ö Æ÷Æ®¸¦ ÃÊ±âÈ­
-	int Select_Mode = 0;
+	int Select_Mode = 0, count;
 
 	cout << endl;
 	cout << "0. Noting" << endl;
@@ -301,25 +342,40 @@ int main(int argc, char *argv[])
 	cout << "2. OutBound" << endl;
 	cout << "Select: ";
 	cin >> Select_Mode;
-;
+	
 
 	if (Select_Mode == 1)
-	{
+	{	
 		InBound = 1;
-		cout << "InBound_Data: ";
-		cin >> InBound_Data;
-		cout << "InBound_Change_Data: ";
-		cin >> InBound_Change_Data;
-		
+		system("cls");
+		cout << "InBound_Data_Count: ";
+		cin >> count;
+		c = count;
+
+		for (int i = 0; i < count; i++)
+		{
+			cout << i + 1 << ". InBound_Data: ";
+			cin >> InBound_Data[i];
+			cout << i + 1 << ". InBound_Change_Data: ";
+			cin >> InBound_Change_Data[i];
+		}
 	}
 
 	else if (Select_Mode == 2)
 	{
 		OutBound = 1;
-		cout << "OutBound_Data: ";
-		cin >> OutBound_Data;
-		cout << "OutBound_Change_Data: ";
-		cin >> OutBound_Change_Data;
+		system("cls");
+		cout << "OutBound_Data_Count: ";
+		cin >> count;
+		c = count;
+
+		for (int i = 0; i < count; i++)
+		{
+			cout << i + 1 << ". OutBound_Data: ";
+			cin >> OutBound_Data[i];
+			cout << i + 1 << ". OutBound_Change_Data: ";
+			cin >> OutBound_Change_Data[i];
+		}
 	}
 
 	system("cls");
