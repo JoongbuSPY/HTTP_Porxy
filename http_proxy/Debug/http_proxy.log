@@ -1,7 +1,7 @@
 ﻿  main.cpp
-c:\users\wldnw\documents\visual studio 2017\projects\http_proxy\http_proxy\main.cpp(194): warning C4996: 'strdup': The POSIX name for this item is deprecated. Instead, use the ISO C and C++ conformant name: _strdup. See online help for details.
+c:\users\wldnw\documents\visual studio 2017\projects\http_proxy\http_proxy\main.cpp(215): warning C4996: 'strdup': The POSIX name for this item is deprecated. Instead, use the ISO C and C++ conformant name: _strdup. See online help for details.
   c:\program files (x86)\windows kits\10\include\10.0.15063.0\ucrt\string.h(538): note: 'strdup' 선언을 참조하십시오.
-c:\users\wldnw\documents\visual studio 2017\projects\http_proxy\http_proxy\main.cpp(264): warning C4996: 'strdup': The POSIX name for this item is deprecated. Instead, use the ISO C and C++ conformant name: _strdup. See online help for details.
+c:\users\wldnw\documents\visual studio 2017\projects\http_proxy\http_proxy\main.cpp(285): warning C4996: 'strdup': The POSIX name for this item is deprecated. Instead, use the ISO C and C++ conformant name: _strdup. See online help for details.
   c:\program files (x86)\windows kits\10\include\10.0.15063.0\ucrt\string.h(538): note: 'strdup' 선언을 참조하십시오.
-  http_proxy.vcxproj -> C:\Users\wldnw\Documents\Visual Studio 2017\Projects\http_proxy\Debug\http_proxy.exe
-  http_proxy.vcxproj -> C:\Users\wldnw\Documents\Visual Studio 2017\Projects\http_proxy\Debug\http_proxy.pdb (Partial PDB)
+  http_proxy.vcxproj -> C:\Users\wldnw\documents\visual studio 2017\Projects\http_proxy\Debug\http_proxy.exe
+  http_proxy.vcxproj -> C:\Users\wldnw\documents\visual studio 2017\Projects\http_proxy\Debug\http_proxy.pdb (Partial PDB)

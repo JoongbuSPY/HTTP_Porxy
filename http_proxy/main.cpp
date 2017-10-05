@@ -102,15 +102,36 @@ void socket_init(SOCKET &sock, sockaddr_in &addr)
 
 }
 
-string getAddr(char *Client_Data)
+string getAddr(char *Client_Data, int *other_port_addr)
 {
 	string data(Client_Data);
 
 	std::smatch result;
-	std::regex p("Host: (.*)");
+	//std::regex p("Host: (.*)"); Host: (.*)(:*)
+	std::regex p("Host: (.*):(.*)");
 
 	if (std::regex_search(data, result, p))
-		return result[1];
+	{
+		//cout << "re[0]: ";
+		//cout << result[0] << endl;
+
+		//cout << "re[1]: ";
+		//cout << result[1] << endl;
+
+		//cout << "re[2]: ";
+		//cout << result[2] << endl;
+		if (result.size() == 3)
+		{
+			string temp = result[2];
+			*other_port_addr = atoi(temp.c_str());
+			return result[1];
+		}
+		else
+			return result[1];
+	}
+		
+	
+
 
 	return "";
 }
@@ -168,7 +189,7 @@ void httpproxy_th2(SOCKET Client, SOCKET Web)//httpproxy_th2
 		}
 		web_buf = (char *)malloc(sizeof(char)*recv_len); //recv ¹ÞÀº ¹ÙÀÌÆ® ¸¸Å­ ÀúÀå
 
-		memcpy(web_buf, buf, recv_len);
+		memcpy(web_buf, buf, recv_len);	
 		
 		//inbound-> ¼³Á¤ Å¬¶óÀÌ¾ðÆ®ÀÇ ¿äÃ»¿¡ ÀÀ´ä¹ÞÀº µ¥ÀÌÅÍ°¡ Å¬¶óÀÌ¾ðÆ®·Î º¸³»ÁÖ´Â ÆÐÅ¶.
 
@@ -218,7 +239,7 @@ void httpproxy_th2(SOCKET Client, SOCKET Web)//httpproxy_th2
 
 void Client_th1(sockaddr_in Server_Addr, SOCKET Client)//Å¬¶óÀÌ¾ðÆ®ÀÇ ¿äÃ»À» ¹Þ´Â ¾²·¹µå Client_th1
 {
-	int http_port = 80,recv_len;
+	int http_port = 80, https_port=443,recv_len, other_port=0;
 
 	char buf[65535];
 	char *recv_buf;
@@ -241,7 +262,7 @@ void Client_th1(sockaddr_in Server_Addr, SOCKET Client)//Å¬¶óÀÌ¾ðÆ®ÀÇ ¿äÃ»À» ¹Þ´
 		recv_buf = (char *)malloc(sizeof(char)*recv_len);
 
 		memcpy(recv_buf, buf, recv_len);
-
+		
 		if (OutBound == 1)
 		{
 			std::string OutBound_String(recv_buf);
@@ -266,7 +287,7 @@ void Client_th1(sockaddr_in Server_Addr, SOCKET Client)//Å¬¶óÀÌ¾ðÆ®ÀÇ ¿äÃ»À» ¹Þ´
 			}
 		}
 
-		host_Addr = getAddr(recv_buf);
+		host_Addr = getAddr(recv_buf, &other_port);
 
 		if (host_Addr == "")
 		{
@@ -285,8 +306,10 @@ void Client_th1(sockaddr_in Server_Addr, SOCKET Client)//Å¬¶óÀÌ¾ðÆ®ÀÇ ¿äÃ»À» ¹Þ´
 			}
 			cout << "Site IP Addr: " << Domain_Addr << endl;
 		}
-
-		Web_Addr = init_Addr(Domain_Addr, http_port);
+		if(other_port==0)
+			Web_Addr = init_Addr(Domain_Addr, http_port);
+		else
+			Web_Addr = init_Addr(Domain_Addr, other_port);
 
 		if ((Web_Socket = socket(PF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET)
 		{
